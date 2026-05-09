@@ -45,7 +45,7 @@ export class ClusterRateLimiter extends LocalRateLimiter {
                 });
 
                 server.discover.on('added', () => {
-                    if (server.nodes.get('self').isMaster) {
+                    if (server.nodes.get('self')!.isMaster) {
                         // When a new node is added, just send the rate limiters this master instance has.
                         // This value is the true value of the rate limiters.
                         this.sendRateLimiters();
@@ -78,7 +78,7 @@ export class ClusterRateLimiter extends LocalRateLimiter {
         return super.disconnect().then(() => {
             // If the current instance is the master and the server is closing,
             // demote and send the rate limiter of the current instance to the new master.
-            if (this.server.nodes.get('self').isMaster) {
+            if (this.server.nodes.get('self')!.isMaster) {
                 this.server.discover.demote();
                 this.server.discover.send('rate_limiter:limiters', this.rateLimiters);
             }

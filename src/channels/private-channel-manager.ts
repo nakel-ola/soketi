@@ -10,9 +10,20 @@ export class PrivateChannelManager extends PublicChannelManager {
      * Join the connection to the channel.
      */
     join(ws: WebSocket, channel: string, message?: PusherMessage): Promise<JoinResponse> {
-        let passedSignature = message?.data?.auth;
+        if (!message) {
+            return Promise.resolve({
+                ws,
+                success: false,
+                errorCode: 4009,
+                errorMessage: 'The connection is unauthorized.',
+                authError: true,
+                type: 'AuthError',
+            });
+        }
 
-        return this.signatureIsValid(ws.app, ws.id, message, passedSignature).then(isValid => {
+        let passedSignature = message.data?.auth;
+
+        return this.signatureIsValid(ws.app, ws.id, message, passedSignature ?? '').then(isValid => {
             if (!isValid) {
                 return {
                     ws,
@@ -62,6 +73,6 @@ export class PrivateChannelManager extends PublicChannelManager {
      * Get the data to sign for the token for specific channel.
      */
     protected getDataToSignForSignature(socketId: string, message: PusherMessage): string {
-        return `${socketId}:${message.data.channel}`;
+        return `${socketId}:${message.data?.channel}`;
     }
 }

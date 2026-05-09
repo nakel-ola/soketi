@@ -116,7 +116,7 @@ export class Metrics implements MetricsInterface {
     /**
      * Get the stored metrics as JSON.
      */
-    getMetricsAsJson(): Promise<prom.metric[]|void> {
+    getMetricsAsJson(): Promise<Awaited<ReturnType<prom.Registry['getMetricsAsJSON']>>|void> {
         if (!this.server.options.metrics.enabled) {
             return Promise.resolve();
         }

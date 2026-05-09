@@ -178,7 +178,9 @@ export class WsHandler {
             } else if (message.event === 'pusher:subscribe') {
                 this.subscribeToChannel(ws, message);
             } else if (message.event === 'pusher:unsubscribe') {
-                this.unsubscribeFromChannel(ws, message.data.channel);
+                if (message.data?.channel) {
+                    this.unsubscribeFromChannel(ws, message.data.channel);
+                }
             } else if (Utils.isClientEvent(message.event)) {
                 this.handleClientEvent(ws, message);
             } else if (message.event === 'pusher:signin') {
@@ -328,7 +330,12 @@ export class WsHandler {
             return;
         }
 
-        let channel = message.data.channel;
+        let channel = message.data?.channel;
+
+        if (!channel) {
+            return;
+        }
+
         let channelManager = this.getChannelManagerFor(channel);
 
         if (channel.length > ws.app.maxChannelNameLength) {
@@ -406,6 +413,10 @@ export class WsHandler {
 
             // Otherwise, prepare a response for the presence channel.
             this.server.adapter.getChannelMembers(ws.app.id, channel, false).then(members => {
+                if (!response.member) {
+                    return;
+                }
+
                 let { user_id, user_info } = response.member;
 
                 ws.presence.set(channel, response.member);
@@ -539,7 +550,11 @@ export class WsHandler {
      * Handle the events coming from the client.
      */
     handleClientEvent(ws: WebSocket, message: PusherMessage): any {
-        let { event, data, channel } = message;
+        const { event, data, channel } = message;
+
+        if (!event || !channel) {
+            return;
+        }
 
         if (!ws.app.enableClientMessages) {
             return ws.sendJson({
@@ -593,7 +608,7 @@ export class WsHandler {
 
             this.server.rateLimiter.consumeFrontendEventPoints(1, ws.app, ws).then(response => {
                 if (response.canContinue) {
-                    let userId = ws.presence.has(channel) ? ws.presence.get(channel).user_id : null;
+                    let userId = ws.presence.has(channel) ? ws.presence.get(channel)!.user_id : null;
 
                     let message = JSON.stringify({
                         event,
@@ -631,7 +646,14 @@ export class WsHandler {
             return;
         }
 
-        this.signinTokenIsValid(ws, message.data.user_data, message.data.auth).then(isValid => {
+        const userData = message.data?.user_data;
+        const auth = message.data?.auth;
+
+        if (!userData || !auth) {
+            return;
+        }
+
+        this.signinTokenIsValid(ws, userData, auth).then(isValid => {
             if (!isValid) {
                 ws.sendJson({
                     event: 'pusher:error',
@@ -650,7 +672,7 @@ export class WsHandler {
                 return;
             }
 
-            let decodedUser = JSON.parse(message.data.user_data);
+            let decodedUser = JSON.parse(userData);
 
             if (!decodedUser.id) {
                 ws.sendJson({

@@ -31,7 +31,19 @@ export class PresenceChannelManager extends PrivateChannelManager {
                 };
             }
 
-            let member: PresenceMember = JSON.parse(message.data.channel_data);
+            const channelData = message?.data?.channel_data;
+
+            if (!channelData) {
+                return {
+                    success: false,
+                    ws,
+                    errorCode: 4302,
+                    errorMessage: 'channel_data is required for presence channels.',
+                    type: 'ServerError',
+                };
+            }
+
+            let member: PresenceMember = JSON.parse(channelData);
 
             let memberSizeInKb = Utils.dataToKilobytes(member.user_info);
 
@@ -88,6 +100,6 @@ export class PresenceChannelManager extends PrivateChannelManager {
      * Get the data to sign for the token for specific channel.
      */
     protected getDataToSignForSignature(socketId: string, message: PusherMessage): string {
-        return `${socketId}:${message.data.channel}:${message.data.channel_data}`;
+        return `${socketId}:${message.data?.channel}:${message.data?.channel_data}`;
     }
 }

@@ -35,7 +35,7 @@ export class LocalAdapter implements AdapterInterface {
             this.namespaces.set(appId, new Namespace(appId));
         }
 
-        return this.namespaces.get(appId);
+        return this.namespaces.get(appId)!;
     }
 
     /**
@@ -158,7 +158,7 @@ export class LocalAdapter implements AdapterInterface {
     send(appId: string, channel: string, data: string, exceptingId: string|null = null): any {
         // For user-dedicated channels, intercept the .send() call and use custom logic.
         if (channel.indexOf('#server-to-user-') === 0) {
-            let userId = channel.split('#server-to-user-').pop();
+            let userId = channel.split('#server-to-user-').pop()!;
 
             this.getUserSockets(appId, userId).then(sockets => {
                 sockets.forEach(ws => {

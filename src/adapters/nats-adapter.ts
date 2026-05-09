@@ -51,9 +51,9 @@ export class NatsAdapter extends HorizontalAdapter {
         return new Promise(resolve => {
             connect({
                 servers: this.server.options.adapter.nats.servers,
-                user: this.server.options.adapter.nats.user,
-                pass: this.server.options.adapter.nats.pass,
-                token: this.server.options.adapter.nats.token,
+                user: this.server.options.adapter.nats.user ?? undefined,
+                pass: this.server.options.adapter.nats.pass ?? undefined,
+                token: this.server.options.adapter.nats.token ?? undefined,
                 pingInterval: 30_000,
                 timeout: this.server.options.adapter.nats.timeout,
                 reconnect: false,

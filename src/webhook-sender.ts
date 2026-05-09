@@ -59,13 +59,17 @@ export class WebhookSender {
             const { appKey, payload, originalPusherSignature } = rawData;
 
             server.appManager.findByKey(appKey).then(app => {
+                if (!app) {
+                    return;
+                }
+
                 // Ensure the payload hasn't been tampered with between the job being dispatched
                 // and here, as we may need to recalculate the signature post filtration.
                 if (originalPusherSignature !== createWebhookHmac(JSON.stringify(payload), app.secret)) {
                     return;
                 }
 
-                async.each(app.webhooks, (webhook: WebhookInterface, resolveWebhook) => {
+                async.each(app.webhooks ?? [], (webhook: WebhookInterface, resolveWebhook) => {
                     const originalEventsLength = payload.events.length;
                     let filteredPayloadEvents = payload.events;
 

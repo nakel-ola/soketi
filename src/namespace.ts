@@ -60,9 +60,10 @@ export class Namespace {
                 this.channels.set(channel, new Set);
             }
 
-            this.channels.get(channel).add(ws.id);
+            const set = this.channels.get(channel)!;
+            set.add(ws.id);
 
-            resolve(this.channels.get(channel).size);
+            resolve(set.size);
         });
     }
 
@@ -71,11 +72,13 @@ export class Namespace {
      * Return the total number of connections remaining to the channel.
      */
     async removeFromChannel(wsId: string, channel: string|string[]): Promise<number|void> {
-        let remove = (channel) => {
-            if (this.channels.has(channel)) {
-                this.channels.get(channel).delete(wsId);
+        let remove = (channel: string) => {
+            const set = this.channels.get(channel);
 
-                if (this.channels.get(channel).size === 0) {
+            if (set) {
+                set.delete(wsId);
+
+                if (set.size === 0) {
                     this.channels.delete(channel);
                 }
             }
@@ -90,7 +93,7 @@ export class Namespace {
 
             remove(channel);
 
-            resolve(this.channels.has(channel) ? this.channels.get(channel).size : 0);
+            resolve(this.channels.get(channel)?.size ?? 0);
         });
     }
 
@@ -103,7 +106,7 @@ export class Namespace {
                 return resolve(false);
             }
 
-            resolve(this.channels.get(channel).has(wsId));
+            resolve(this.channels.get(channel)!.has(wsId));
         });
     }
 
@@ -138,15 +141,17 @@ export class Namespace {
                 return resolve(new Map<string, WebSocket>());
             }
 
-            let wsIds = this.channels.get(channel);
+            let wsIds = this.channels.get(channel)!;
 
             resolve(
                 Array.from(wsIds).reduce((sockets, wsId) => {
-                    if (!this.sockets.has(wsId)) {
+                    const ws = this.sockets.get(wsId);
+
+                    if (!ws) {
                         return sockets;
                     }
 
-                    return sockets.set(wsId, this.sockets.get(wsId));
+                    return sockets.set(wsId, ws);
                 }, new Map<string, WebSocket>())
             );
         });
@@ -158,7 +163,7 @@ export class Namespace {
     getChannelMembers(channel: string): Promise<Map<string, PresenceMemberInfo>> {
         return this.getChannelSockets(channel).then(sockets => {
             return Array.from(sockets).reduce((members, [wsId, ws]) => {
-                let member: PresenceMember = ws.presence ? ws.presence.get(channel) : null;
+                let member: PresenceMember | undefined = ws.presence ? ws.presence.get(channel) : undefined;
 
                 if (member) {
                     members.set(member.user_id as string, member.user_info);
@@ -206,8 +211,10 @@ export class Namespace {
             this.users.set(ws.user.id, new Set());
         }
 
-        if (!this.users.get(ws.user.id).has(ws.id)) {
-            this.users.get(ws.user.id).add(ws.id);
+        const userSockets = this.users.get(ws.user.id)!;
+
+        if (!userSockets.has(ws.id)) {
+            userSockets.add(ws.id);
         }
 
         return Promise.resolve();
@@ -221,12 +228,14 @@ export class Namespace {
             return Promise.resolve();
         }
 
-        if (this.users.has(ws.user.id)) {
-            this.users.get(ws.user.id).delete(ws.id);
-        }
+        const userSockets = this.users.get(ws.user.id);
 
-        if (this.users.get(ws.user.id) && this.users.get(ws.user.id).size === 0) {
-            this.users.delete(ws.user.id);
+        if (userSockets) {
+            userSockets.delete(ws.id);
+
+            if (userSockets.size === 0) {
+                this.users.delete(ws.user.id);
+            }
         }
 
         return Promise.resolve();
@@ -244,7 +253,11 @@ export class Namespace {
 
         return Promise.resolve(
             [...wsIds].reduce((sockets, wsId) => {
-                sockets.add(this.sockets.get(wsId));
+                const ws = this.sockets.get(wsId);
+
+                if (ws) {
+                    sockets.add(ws);
+                }
 
                 return sockets;
             }, new Set<WebSocket>())

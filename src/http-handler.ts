@@ -340,12 +340,12 @@ export class HttpHandler {
                 });
             }
 
-            let channels: string[] = message.channels || [message.channel];
+            const channels: string[] = message.channels ?? [message.channel as string];
 
             message.channels = channels;
 
             // Make sure the channels length is not too big.
-            if (channels.length > app.maxEventChannelsAtOnce) {
+            if (channels.length > Number(app.maxEventChannelsAtOnce)) {
                 return reject({
                     message: `Cannot broadcast to more than ${app.maxEventChannelsAtOnce} channels at once`,
                     code: 400,
@@ -353,7 +353,7 @@ export class HttpHandler {
             }
 
             // Make sure the event name length is not too big.
-            if (message.name.length > app.maxEventNameLength) {
+            if (message.name.length > Number(app.maxEventNameLength)) {
                 return reject({
                     message: `Event name is too long. Maximum allowed size is ${app.maxEventNameLength}.`,
                     code: 400,
@@ -375,7 +375,13 @@ export class HttpHandler {
     }
 
     protected broadcastMessage(message: PusherApiMessage, appId: string): void {
-        message.channels.forEach(channel => {
+        const channels = message.channels;
+
+        if (!channels) {
+            return;
+        }
+
+        channels.forEach(channel => {
             let msg = {
                 event: message.name,
                 channel,
@@ -441,7 +447,7 @@ export class HttpHandler {
 
             let requestSizeInMb = Utils.dataToMegabytes(rawBody);
 
-            if (requestSizeInMb > this.server.options.httpApi.requestLimitInMb) {
+            if (requestSizeInMb > Number(this.server.options.httpApi.requestLimitInMb)) {
                 return this.entityTooLargeResponse(res, 'The payload size is too big.');
             }
 
@@ -500,7 +506,7 @@ export class HttpHandler {
     }
 
     protected broadcastEventRateLimitingMiddleware(res: HttpResponse, next: CallableFunction): any {
-        let channels = res.body.channels || [res.body.channel];
+        const channels: string[] = res.body.channels ?? [res.body.channel as string];
 
         this.server.rateLimiter.consumeBackendEventPoints(Math.max(channels.length, 1), res.app).then(response => {
             if (response.canContinue) {
@@ -569,7 +575,7 @@ export class HttpHandler {
      * Read the JSON content of a request.
      */
     protected readJson(res: HttpResponse, cb: CallableFunction, err: any) {
-        let buffer;
+        let buffer: Buffer | undefined;
 
         let loggingAction = (payload) => {
             if (this.server.options.debug) {
@@ -579,7 +585,7 @@ export class HttpHandler {
         };
 
         res.onData((ab, isLast) => {
-            let chunk = Buffer.from(ab);
+            const chunk = Buffer.from(ab);
 
             if (isLast) {
                 let json = {};
@@ -587,8 +593,7 @@ export class HttpHandler {
 
                 if (buffer) {
                     try {
-                        // @ts-ignore
-                        json = JSON.parse(Buffer.concat([buffer, chunk]));
+                        json = JSON.parse(Buffer.concat([buffer, chunk]).toString());
                     } catch (e) {
                         //
                     }
@@ -603,9 +608,8 @@ export class HttpHandler {
                     loggingAction(json);
                 } else {
                     try {
-                        // @ts-ignore
-                        json = JSON.parse(chunk);
-                        raw = chunk.toString();
+                        json = JSON.parse(Buffer.from(chunk).toString());
+                        raw = Buffer.from(chunk).toString();
                     } catch (e) {
                         //
                     }

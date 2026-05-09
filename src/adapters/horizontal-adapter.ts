@@ -111,7 +111,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
         [RequestType.SOCKETS]: {
             computeResponse: (request: Request, response: Response) => {
                 if (response.sockets) {
-                    response.sockets.forEach(ws => request.sockets.set(ws.id, ws));
+                    response.sockets.forEach(ws => request.sockets!.set(ws.id, ws));
                 }
             },
             resolveValue: (request: Request, response: Response) => {
@@ -121,7 +121,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
         [RequestType.CHANNEL_SOCKETS]: {
             computeResponse: (request: Request, response: Response) => {
                 if (response.sockets) {
-                    response.sockets.forEach(ws => request.sockets.set(ws.id, ws));
+                    response.sockets.forEach(ws => request.sockets!.set(ws.id, ws));
                 }
             },
             resolveValue: (request: Request, response: Response) => {
@@ -132,12 +132,13 @@ export abstract class HorizontalAdapter extends LocalAdapter {
             computeResponse: (request: Request, response: Response) => {
                 if (response.channels) {
                     response.channels.forEach(([channel, connections]) => {
-                        if (request.channels.has(channel)) {
+                        const channels = request.channels!;
+                        if (channels.has(channel)) {
                             connections.forEach(connection => {
-                                request.channels.set(channel, request.channels.get(channel).add(connection));
+                                channels.set(channel, channels.get(channel)!.add(connection));
                             });
                         } else {
-                            request.channels.set(channel, new Set(connections));
+                            channels.set(channel, new Set(connections));
                         }
                     });
                 }
@@ -150,13 +151,11 @@ export abstract class HorizontalAdapter extends LocalAdapter {
             computeResponse: (request: Request, response: Response) => {
                 if (response.channelsWithSocketsCount) {
                     response.channelsWithSocketsCount.forEach(([channel, connectionsCount]) => {
-                        if (request.channelsWithSocketsCount.has(channel)) {
-                            request.channelsWithSocketsCount.set(
-                                channel,
-                                request.channelsWithSocketsCount.get(channel) + connectionsCount,
-                            );
+                        const counts = request.channelsWithSocketsCount!;
+                        if (counts.has(channel)) {
+                            counts.set(channel, counts.get(channel)! + connectionsCount);
                         } else {
-                            request.channelsWithSocketsCount.set(channel, connectionsCount);
+                            counts.set(channel, connectionsCount);
                         }
                     });
                 }
@@ -168,7 +167,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
         [RequestType.CHANNEL_MEMBERS]: {
             computeResponse: (request: Request, response: Response) => {
                 if (response.members) {
-                    response.members.forEach(([id, member]) => request.members.set(id, member));
+                    response.members.forEach(([id, member]) => request.members!.set(id, member));
                 }
             },
             resolveValue: (request: Request, response: Response) => {
@@ -178,7 +177,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
         [RequestType.SOCKETS_COUNT]: {
             computeResponse: (request: Request, response: Response) => {
                 if (typeof response.totalCount !== 'undefined') {
-                    request.totalCount += response.totalCount;
+                    request.totalCount = (request.totalCount ?? 0) + response.totalCount;
                 }
             },
             resolveValue: (request: Request, response: Response) => {
@@ -188,7 +187,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
         [RequestType.CHANNEL_MEMBERS_COUNT]: {
             computeResponse: (request: Request, response: Response) => {
                 if (typeof response.totalCount !== 'undefined') {
-                    request.totalCount += response.totalCount;
+                    request.totalCount = (request.totalCount ?? 0) + response.totalCount;
                 }
             },
             resolveValue: (request: Request, response: Response) => {
@@ -198,7 +197,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
         [RequestType.CHANNEL_SOCKETS_COUNT]: {
             computeResponse: (request: Request, response: Response) => {
                 if (typeof response.totalCount !== 'undefined') {
-                    request.totalCount += response.totalCount;
+                    request.totalCount = (request.totalCount ?? 0) + response.totalCount;
                 }
             },
             resolveValue: (request: Request, response: Response) => {
@@ -556,12 +555,16 @@ export abstract class HorizontalAdapter extends LocalAdapter {
      * Listen for requests coming from other nodes.
      */
     protected onRequest(channel: string, msg: string): void {
-        let request: RequestBody;
+        let request: RequestBody | undefined;
 
         try {
             request = JSON.parse(msg);
         } catch (err) {
             //
+        }
+
+        if (!request) {
+            return;
         }
 
         let { appId } = request;
@@ -589,7 +592,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
                 break;
 
             case RequestType.CHANNEL_SOCKETS:
-                this.processRequestFromAnotherInstance(request, () => super.getChannelSockets(appId, request.opts.channel).then(sockets => {
+                this.processRequestFromAnotherInstance(request, () => super.getChannelSockets(appId, request.opts!.channel).then(sockets => {
                     let localSockets: WebSocket[] = Array.from(sockets.values());
 
                     return {
@@ -622,7 +625,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
 
             case RequestType.CHANNEL_MEMBERS:
                 this.processRequestFromAnotherInstance(request, () => {
-                    return super.getChannelMembers(appId, request.opts.channel).then(localMembers => {
+                    return super.getChannelMembers(appId, request.opts!.channel).then(localMembers => {
                         return { members: [...localMembers] };
                     });
                 });
@@ -638,7 +641,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
 
             case RequestType.CHANNEL_MEMBERS_COUNT:
                 this.processRequestFromAnotherInstance(request, () => {
-                    return super.getChannelMembersCount(appId, request.opts.channel).then(localCount => {
+                    return super.getChannelMembersCount(appId, request.opts!.channel).then(localCount => {
                         return { totalCount: localCount };
                     });
                 });
@@ -646,7 +649,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
 
             case RequestType.CHANNEL_SOCKETS_COUNT:
                 this.processRequestFromAnotherInstance(request, () => {
-                    return super.getChannelSocketsCount(appId, request.opts.channel).then(localCount => {
+                    return super.getChannelSocketsCount(appId, request.opts!.channel).then(localCount => {
                         return { totalCount: localCount };
                     });
                 });
@@ -654,7 +657,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
 
             case RequestType.SOCKET_EXISTS_IN_CHANNEL:
                 this.processRequestFromAnotherInstance(request, () => {
-                    return super.isInChannel(appId, request.opts.channel, request.opts.wsId).then(existsLocally => {
+                    return super.isInChannel(appId, request.opts!.channel, request.opts!.wsId).then(existsLocally => {
                         return { exists: existsLocally };
                     });
                 });
@@ -662,7 +665,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
 
             case RequestType.TERMINATE_USER_CONNECTIONS:
                 this.processRequestFromAnotherInstance(request, () => {
-                    this.terminateLocalUserConnections(appId, request.opts.userId);
+                    this.terminateLocalUserConnections(appId, request.opts!.userId);
 
                     return Promise.resolve();
                 });
@@ -674,12 +677,16 @@ export abstract class HorizontalAdapter extends LocalAdapter {
      * Handle a response from another node.
      */
     protected onResponse(channel: string, msg: string): void {
-        let response: Response;
+        let response: Response | undefined;
 
         try {
             response = JSON.parse(msg);
         } catch (err) {
             //
+        }
+
+        if (!response) {
+            return;
         }
 
         const requestId = response.requestId;
@@ -688,7 +695,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
             return;
         }
 
-        const request = this.requests.get(requestId);
+        const request = this.requests.get(requestId)!;
 
         if (this.server.options.debug) {
             Log.clusterTitle('🧠 Received response from another node to our request');
@@ -797,7 +804,11 @@ export abstract class HorizontalAdapter extends LocalAdapter {
     ) {
         const request = this.requests.get(response.requestId);
 
-        request.msgCount++;
+        if (!request) {
+            return;
+        }
+
+        request.msgCount = (request.msgCount ?? 0) + 1;
 
         responseComputer(request, response);
 

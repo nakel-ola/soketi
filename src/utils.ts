@@ -111,7 +111,11 @@ export class Utils {
     /**
      * Check if client is a client event.
      */
-    static isClientEvent(event: string): boolean {
+    static isClientEvent(event: string | undefined): boolean {
+        if (!event) {
+            return false;
+        }
+
         let isClientEvent = false;
 
         this._clientEventPatterns.forEach(pattern => {

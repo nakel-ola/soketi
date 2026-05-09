@@ -21,7 +21,7 @@ export class DynamoDbAppManager extends BaseAppManager {
         this.dynamodb = new DynamoDB({
             apiVersion: '2012-08-10',
             region: server.options.appManager.dynamodb.region,
-            endpoint: server.options.appManager.dynamodb.endpoint,
+            endpoint: server.options.appManager.dynamodb.endpoint ?? undefined,
         });
     }
 
@@ -70,7 +70,7 @@ export class DynamoDbAppManager extends BaseAppManager {
                 ':app_key': { S: key },
             },
         }).promise().then((response) => {
-            let item = response.Items[0] || null;
+            let item = response.Items?.[0] ?? null;
 
             if (!item) {
                 if (this.server.options.debug) {

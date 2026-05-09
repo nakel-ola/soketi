@@ -10,7 +10,7 @@ interface Redis {
     username: string|null;
     password: string|null;
     keyPrefix: string;
-    sentinels: RedisSentinel[];
+    sentinels: RedisSentinel[]|null;
     sentinelPassword: string|null;
     name: string;
     clusterNodes: ClusterNode[];
@@ -51,8 +51,8 @@ export interface Options {
             requestsTimeout: number;
             prefix: string;
             servers: string[];
-            user?: string;
-            pass?: string|null;
+            user: string|null;
+            pass: string|null;
             token: string|null;
             timeout: number;
             nodesNumber: number|null;
@@ -70,7 +70,7 @@ export interface Options {
         dynamodb: {
             table: string;
             region: string;
-            endpoint?: string;
+            endpoint: string|null;
         };
         mysql: {
             table: string;
@@ -164,7 +164,7 @@ export interface Options {
         };
         sqs: {
             region?: string;
-            endpoint?: string;
+            endpoint: string|null;
             clientOptions?: SQS.Types.ClientConfiguration;
             consumerOptions?: ConsumerOptions;
             queueUrl: string;

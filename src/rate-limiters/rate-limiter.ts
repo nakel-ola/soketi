@@ -32,21 +32,21 @@ export class RateLimiter implements RateLimiterInterface {
     /**
      * Consume the points for backend-received events.
      */
-    consumeBackendEventPoints(points: number, app?: App, ws?: WebSocket): Promise<ConsumptionResponse> {
+    consumeBackendEventPoints(points: number, app: App, ws?: WebSocket): Promise<ConsumptionResponse> {
         return this.driver.consumeBackendEventPoints(points, app, ws);
     }
 
     /**
      * Consume the points for frontend-received events.
      */
-    consumeFrontendEventPoints(points: number, app?: App, ws?: WebSocket): Promise<ConsumptionResponse> {
+    consumeFrontendEventPoints(points: number, app: App, ws?: WebSocket): Promise<ConsumptionResponse> {
         return this.driver.consumeFrontendEventPoints(points, app, ws);
     }
 
     /**
      * Consume the points for HTTP read requests.
      */
-    consumeReadRequestsPoints(points: number, app?: App, ws?: WebSocket): Promise<ConsumptionResponse> {
+    consumeReadRequestsPoints(points: number, app: App, ws?: WebSocket): Promise<ConsumptionResponse> {
         return this.driver.consumeReadRequestsPoints(points, app, ws);
     }
 

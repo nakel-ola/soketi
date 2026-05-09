@@ -83,7 +83,7 @@ export class SqsQueueDriver implements QueueInterface {
 
             if (this.server.options.queue.sqs.processBatch) {
                 consumerOptions.handleMessageBatch = (messages) => {
-                    return Promise.all(messages.map(({ Body }) => handleMessage({ Body }))).then(() => {
+                    return Promise.all(messages.map(({ Body }) => handleMessage({ Body: Body ?? '' }))).then(() => {
                         //
                     });
             };
@@ -122,7 +122,7 @@ export class SqsQueueDriver implements QueueInterface {
         return new SQS({
             apiVersion: '2012-11-05',
             region: sqsOptions.region || 'us-east-1',
-            endpoint: sqsOptions.endpoint,
+            endpoint: sqsOptions.endpoint ?? undefined,
             ...sqsOptions.clientOptions,
         });
     }

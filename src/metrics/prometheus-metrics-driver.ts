@@ -5,22 +5,22 @@ import { Server } from '../server';
 import { Utils } from '../utils';
 
 interface PrometheusMetrics {
-    connectedSockets?: prom.Gauge<'app_id'|'port'>;
-    newConnectionsTotal?: prom.Counter<'app_id'|'port'>;
-    newDisconnectionsTotal?: prom.Counter<'app_id'|'port'>;
-    socketBytesReceived?: prom.Counter<'app_id'|'port'>;
-    socketBytesTransmitted?: prom.Counter<'app_id'|'port'>;
-    wsMessagesReceived?: prom.Counter<'app_id'|'port'>;
-    wsMessagesSent?: prom.Counter<'app_id'|'port'>;
-    httpBytesReceived?: prom.Counter<'app_id'|'port'>;
-    httpBytesTransmitted?: prom.Counter<'app_id'|'port'>;
-    httpCallsReceived?: prom.Counter<'app_id'|'port'>;
-    horizontalAdapterResolveTime?: prom.Histogram<'app_id'|'port'>;
-    horizontalAdapterResolvedPromises?: prom.Counter<'app_id'|'port'>;
-    horizontalAdapterUncompletePromises?: prom.Counter<'app_id'|'port'>;
-    horizontalAdapterSentRequests?: prom.Counter<'app_id'|'port'>;
-    horizontalAdapterReceivedRequests?: prom.Counter<'app_id'|'port'>;
-    horizontalAdapterReceivedResponses?: prom.Counter<'app_id'|'port'>;
+    connectedSockets: prom.Gauge<'app_id'|'port'>;
+    newConnectionsTotal: prom.Counter<'app_id'|'port'>;
+    newDisconnectionsTotal: prom.Counter<'app_id'|'port'>;
+    socketBytesReceived: prom.Counter<'app_id'|'port'>;
+    socketBytesTransmitted: prom.Counter<'app_id'|'port'>;
+    wsMessagesReceived: prom.Counter<'app_id'|'port'>;
+    wsMessagesSent: prom.Counter<'app_id'|'port'>;
+    httpBytesReceived: prom.Counter<'app_id'|'port'>;
+    httpBytesTransmitted: prom.Counter<'app_id'|'port'>;
+    httpCallsReceived: prom.Counter<'app_id'|'port'>;
+    horizontalAdapterResolveTime: prom.Histogram<'app_id'|'port'>;
+    horizontalAdapterResolvedPromises: prom.Counter<'app_id'|'port'>;
+    horizontalAdapterUncompletePromises: prom.Counter<'app_id'|'port'>;
+    horizontalAdapterSentRequests: prom.Counter<'app_id'|'port'>;
+    horizontalAdapterReceivedRequests: prom.Counter<'app_id'|'port'>;
+    horizontalAdapterReceivedResponses: prom.Counter<'app_id'|'port'>;
 }
 
 interface InfraMetadata {
@@ -38,9 +38,7 @@ export class PrometheusMetricsDriver implements MetricsInterface {
      *
      * @type {PrometheusMetrics}
      */
-    protected metrics: PrometheusMetrics = {
-        // TODO: Metrics for subscribes/unsubscribes/client events?
-    };
+    protected metrics!: PrometheusMetrics;
 
     /**
      * Prometheus register repo.
@@ -167,7 +165,7 @@ export class PrometheusMetricsDriver implements MetricsInterface {
     /**
      * Get the stored metrics as JSON.
      */
-    getMetricsAsJson(): Promise<prom.metric[]|void> {
+    getMetricsAsJson(): Promise<Awaited<ReturnType<prom.Registry['getMetricsAsJSON']>>|void> {
         return this.register.getMetricsAsJSON();
     }
 
