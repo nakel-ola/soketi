@@ -148,10 +148,10 @@ export class RedisAdapter extends HorizontalAdapter {
         } else {
             // RedisClient or Redis
             return new Promise((resolve, reject) => {
-                this.pubClient.pubsub(
+                (this.pubClient.pubsub as any)(
                     'NUMSUB',
                     this.requestChannel,
-                    (err, numSub: [any, string]) => {
+                    (err: Error | null, numSub: [any, string]) => {
                         if (err) {
                             return reject(err);
                         }

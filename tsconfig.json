@@ -4,11 +4,14 @@
     "skipLibCheck": true,
     "module": "commonjs",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "outDir": "./dist",
+    "rootDir": "./src",
     "sourceMap": false,
     "target": "es2019",
     "noImplicitAny": false,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "preserveConstEnums": true,
     "removeComments": true,
     "typeRoots": [
@@ -24,7 +27,6 @@
     ]
   },
   "include": [
-    "./typings/**/*.ts",
     "./src/**/*.ts"
   ],
   "exclude": [

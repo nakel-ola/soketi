@@ -14,14 +14,15 @@ import { QueueInterface } from './queues/queue-interface';
 import { RateLimiter } from './rate-limiters/rate-limiter';
 import { RateLimiterInterface } from './rate-limiters/rate-limiter-interface';
 import { uWebSocketMessage } from './message';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { WebhookSender } from './webhook-sender';
 import { WebSocket } from 'uWebSockets.js';
 import { WsHandler } from './ws-handler';
 
 const Discover = require('node-discover');
-const queryString = require('query-string');
 const uWS = require('uWebSockets.js');
+
+const parseQuery = (raw: string) => Object.fromEntries(new URLSearchParams(raw));
 
 export class Server {
     /**
@@ -182,7 +183,7 @@ export class Server {
             },
         },
         instance: {
-            process_id: process.pid || uuidv4(),
+            process_id: process.pid || randomUUID(),
         },
         metrics: {
             enabled: false,
@@ -659,7 +660,7 @@ export class Server {
 
                 server.get(this.url('/apps/:appId/channels'), (res, req) => {
                     res.params = { appId: req.getParameter(0) };
-                    res.query = queryString.parse(req.getQuery());
+                    res.query = parseQuery(req.getQuery());
                     res.method = req.getMethod().toUpperCase();
                     res.url = req.getUrl();
 
@@ -668,7 +669,7 @@ export class Server {
 
                 server.get(this.url('/apps/:appId/channels/:channelName'), (res, req) => {
                     res.params = { appId: req.getParameter(0), channel: req.getParameter(1) };
-                    res.query = queryString.parse(req.getQuery());
+                    res.query = parseQuery(req.getQuery());
                     res.method = req.getMethod().toUpperCase();
                     res.url = req.getUrl();
 
@@ -677,7 +678,7 @@ export class Server {
 
                 server.get(this.url('/apps/:appId/channels/:channelName/users'), (res, req) => {
                     res.params = { appId: req.getParameter(0), channel: req.getParameter(1) };
-                    res.query = queryString.parse(req.getQuery());
+                    res.query = parseQuery(req.getQuery());
                     res.method = req.getMethod().toUpperCase();
                     res.url = req.getUrl();
 
@@ -686,7 +687,7 @@ export class Server {
 
                 server.post(this.url('/apps/:appId/events'), (res, req) => {
                     res.params = { appId: req.getParameter(0) };
-                    res.query = queryString.parse(req.getQuery());
+                    res.query = parseQuery(req.getQuery());
                     res.method = req.getMethod().toUpperCase();
                     res.url = req.getUrl();
 
@@ -695,7 +696,7 @@ export class Server {
 
                 server.post(this.url('/apps/:appId/batch_events'), (res, req) => {
                     res.params = { appId: req.getParameter(0) };
-                    res.query = queryString.parse(req.getQuery());
+                    res.query = parseQuery(req.getQuery());
                     res.method = req.getMethod().toUpperCase();
                     res.url = req.getUrl();
 
@@ -704,7 +705,7 @@ export class Server {
 
                 server.post(this.url('/apps/:appId/users/:userId/terminate_connections'), (res, req) => {
                     res.params = { appId: req.getParameter(0), userId: req.getParameter(1) };
-                    res.query = queryString.parse(req.getQuery());
+                    res.query = parseQuery(req.getQuery());
                     res.method = req.getMethod().toUpperCase();
                     res.url = req.getUrl();
 
@@ -734,7 +735,7 @@ export class Server {
 
             if (this.options.metrics.enabled) {
                 metricsServer.get(this.url('/metrics'), (res, req) => {
-                    res.query = queryString.parse(req.getQuery());
+                    res.query = parseQuery(req.getQuery());
 
                     return this.httpHandler.metrics(res);
                 });

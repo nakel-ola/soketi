@@ -1,14 +1,16 @@
 import { Cli } from './cli';
+import { Command } from 'commander';
 
-let yargs = require('yargs')
-    .usage('Usage: soketi <command> [options]')
-    .command('start', 'Start the server.', yargs => {
-        return yargs.option('config', { describe: 'The path for the config file. (optional)'});
-    }, (argv) => Cli.start(argv))
-    .demandCommand(1, 'Please provide a valid command.')
-    .help('help')
-    .alias('help', 'h');
+const program = new Command();
 
-yargs.$0 = '';
+program
+    .name('soketi')
+    .usage('<command> [options]');
 
-let argv = yargs.argv;
+program
+    .command('start')
+    .description('Start the server.')
+    .option('--config <path>', 'The path for the config file. (optional)')
+    .action((options) => Cli.start(options));
+
+program.parse();

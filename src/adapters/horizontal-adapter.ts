@@ -1,7 +1,7 @@
 import { LocalAdapter } from './local-adapter';
 import { Log } from '../log';
 import { PresenceMemberInfo } from '../channels/presence-channel-manager';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { WebSocket } from 'uWebSockets.js';
 
 /**
@@ -102,7 +102,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
     /**
      * The UUID assigned for the current instance.
      */
-    protected uuid: string = uuidv4();
+    protected uuid: string = randomUUID();
 
     /**
      * The list of resolvers for each response type.
@@ -721,7 +721,7 @@ export abstract class HorizontalAdapter extends LocalAdapter {
         requestExtra: RequestExtra = {},
         requestOptions: RequestOptions = {},
     ) {
-        const requestId = uuidv4();
+        const requestId = randomUUID();
 
         const timeout = setTimeout(() => {
             if (this.requests.has(requestId)) {

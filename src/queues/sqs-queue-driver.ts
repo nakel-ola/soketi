@@ -7,7 +7,7 @@ import { Log } from '../log';
 import { QueueInterface } from './queue-interface';
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { Server } from '../server';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export class SqsQueueDriver implements QueueInterface {
     /**
@@ -60,7 +60,7 @@ export class SqsQueueDriver implements QueueInterface {
             let handleMessage = ({ Body }: { Body: string; }) => {
                 return new Promise<void>(resolve => {
                     callback(
-                        new Job(uuidv4(), JSON.parse(Body)),
+                        new Job(randomUUID(), JSON.parse(Body)),
                         () => {
                             if (this.server.options.debug) {
                                 Log.successTitle('✅ SQS message processed.');

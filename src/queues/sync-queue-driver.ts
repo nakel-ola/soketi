@@ -2,7 +2,7 @@ import { Job } from '../job';
 import { JobData } from '../webhook-sender';
 import { QueueInterface } from './queue-interface';
 import { Server } from '../server';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export class SyncQueueDriver implements QueueInterface {
     /**
@@ -28,7 +28,7 @@ export class SyncQueueDriver implements QueueInterface {
                 return resolve();
             }
 
-            let jobId = uuidv4();
+            let jobId = randomUUID();
 
             jobCallback(new Job(jobId, data), resolve);
         });
