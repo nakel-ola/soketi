@@ -65,9 +65,7 @@ export class PresenceChannelManager extends PrivateChannelManager {
 
                 return {
                     ...response,
-                    ...{
-                        member,
-                    },
+                    member,
                 };
             });
         }).catch(err => {
@@ -89,9 +87,7 @@ export class PresenceChannelManager extends PrivateChannelManager {
         return super.leave(ws, channel).then(response => {
             return {
                 ...response,
-                ...{
-                    member: ws.presence.get(channel),
-                },
+                member: ws.presence.get(channel),
             };
         });
     }

@@ -1,0 +1,12 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "rules": {
+        "no-unused-vars": "off",
+        "prefer-const": "off",
+        "typescript/ban-ts-comment": "off",
+        "typescript/no-explicit-any": "off",
+        "typescript/no-empty-object-type": "off",
+        "typescript/no-unsafe-function-type": "off",
+        "typescript/no-wrapper-object-types": "off"
+    }
+}

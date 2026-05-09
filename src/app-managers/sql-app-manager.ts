@@ -18,21 +18,16 @@ export abstract class SqlAppManager extends BaseAppManager {
     constructor(protected server: Server) {
         super();
 
-        let knexConfig = {
+        const knexConfig: Knex.Config = {
             client: this.knexClientName(),
             connection: this.knexConnectionDetails(),
             version: this.knexVersion(),
         };
 
         if (this.supportsPooling() && server.options.databasePooling.enabled) {
-            knexConfig = {
-                ...knexConfig,
-                ...{
-                    pool: {
-                        min: server.options.databasePooling.min,
-                        max: server.options.databasePooling.max,
-                    },
-                },
+            knexConfig.pool = {
+                min: server.options.databasePooling.min,
+                max: server.options.databasePooling.max,
             };
         }
 

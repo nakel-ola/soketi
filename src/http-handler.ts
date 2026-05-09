@@ -206,9 +206,7 @@ export class HttpHandler {
                         this.server.adapter.getChannelMembersCount(res.params.appId, res.params.channel).then(membersCount => {
                             let broadcastMessage = {
                                 ...response,
-                                ...{
-                                    user_count: membersCount,
-                                },
+                                user_count: membersCount,
                             };
 
                             this.server.metricsManager.markApiMessage(res.params.appId, {}, broadcastMessage);

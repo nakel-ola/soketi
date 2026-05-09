@@ -98,7 +98,7 @@ export class Log {
 
         const applyMargins = (message: string): string => {
             const spaces = styles
-                .filter(style => /^mx-/.test(style))
+                .filter(style => style.startsWith('mx-'))
                 .map(style => ' '.repeat(parseInt(style.substr(3))))
                 .join('');
 
@@ -107,7 +107,7 @@ export class Log {
 
         const applyPadding = (message: string): string => {
             const spaces = styles
-                .filter(style => /^px-/.test(style))
+                .filter(style => style.startsWith('px-'))
                 .map(style => ' '.repeat(parseInt(style.substr(3))))
                 .join('');
 

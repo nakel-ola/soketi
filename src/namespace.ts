@@ -124,7 +124,7 @@ export class Namespace {
         return this.getChannels().then((channels) => {
             let list = new Map<string, number>();
 
-            for (let [channel, connections] of [...channels]) {
+            for (let [channel, connections] of channels) {
                 list.set(channel, connections.size);
             }
 

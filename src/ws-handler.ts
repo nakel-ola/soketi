@@ -694,9 +694,7 @@ export class WsHandler {
 
             ws.user = {
                 ...decodedUser,
-                ...{
-                    id: decodedUser.id.toString(),
-                },
+                id: decodedUser.id.toString(),
             };
 
             if (ws.userAuthenticationTimeout) {
