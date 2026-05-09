@@ -5,8 +5,8 @@ import { Job } from '../job';
 import { JobData } from '../webhook-sender';
 import { Log } from '../log';
 import { QueueInterface } from './queue-interface';
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { Server } from '../server';
-import { SQS } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 
 export class SqsQueueDriver implements QueueInterface {
@@ -36,16 +36,16 @@ export class SqsQueueDriver implements QueueInterface {
                 QueueUrl: this.server.options.queue.sqs.queueUrl,
             };
 
-            this.sqsClient().sendMessage(params, (err, data) => {
-                if (err) {
-                    Log.errorTitle('❎ SQS client could not publish to the queue.');
-                    Log.error({ data, err, params, queueName });
+            this.sqsClient().send(new SendMessageCommand(params)).then(response => {
+                if (this.server.options.debug) {
+                    Log.successTitle('✅ SQS client publsihed message to the queue.');
+                    Log.success({ data: response, params, queueName });
                 }
 
-                if (this.server.options.debug && !err) {
-                    Log.successTitle('✅ SQS client publsihed message to the queue.');
-                    Log.success({ data, err, params, queueName });
-                }
+                resolve();
+            }).catch(err => {
+                Log.errorTitle('❎ SQS client could not publish to the queue.');
+                Log.error({ err, params, queueName });
 
                 resolve();
             });
@@ -73,25 +73,24 @@ export class SqsQueueDriver implements QueueInterface {
                 });
             };
 
-            let consumerOptions = {
-                queueUrl: this.server.options.queue.sqs.queueUrl,
+            const sqsOptions = this.server.options.queue.sqs;
+
+            const consumer = Consumer.create({
+                queueUrl: sqsOptions.queueUrl,
                 sqs: this.sqsClient(),
-                batchSize: this.server.options.queue.sqs.batchSize,
-                pollingWaitTimeMs: this.server.options.queue.sqs.pollingWaitTimeMs,
-                ...this.server.options.queue.sqs.consumerOptions,
-            };
-
-            if (this.server.options.queue.sqs.processBatch) {
-                consumerOptions.handleMessageBatch = (messages) => {
-                    return Promise.all(messages.map(({ Body }) => handleMessage({ Body: Body ?? '' }))).then(() => {
-                        //
-                    });
-            };
-            } else {
-                consumerOptions.handleMessage = handleMessage;
-            }
-
-            let consumer = Consumer.create(consumerOptions);
+                batchSize: sqsOptions.batchSize,
+                pollingWaitTimeMs: sqsOptions.pollingWaitTimeMs,
+                ...(sqsOptions.processBatch
+                    ? {
+                        handleMessageBatch: (messages) => Promise.all(
+                            messages.map(({ Body }) => handleMessage({ Body: Body ?? '' })),
+                        ).then(() => undefined),
+                    }
+                    : {
+                        handleMessage: ({ Body }) => handleMessage({ Body: Body ?? '' }).then(() => undefined),
+                    }),
+                ...sqsOptions.consumerOptions,
+            });
 
             consumer.start();
 
@@ -106,7 +105,7 @@ export class SqsQueueDriver implements QueueInterface {
      */
     disconnect(): Promise<void> {
         return async.each([...this.queueWithConsumer], ([queueName, consumer]: [string, Consumer], callback) => {
-            if (consumer.isRunning) {
+            if (consumer.status?.isRunning) {
                 consumer.stop();
                 callback();
             }
@@ -116,10 +115,10 @@ export class SqsQueueDriver implements QueueInterface {
     /**
      * Get the SQS client.
      */
-    protected sqsClient(): SQS {
+    protected sqsClient(): SQSClient {
         let sqsOptions = this.server.options.queue.sqs;
 
-        return new SQS({
+        return new SQSClient({
             apiVersion: '2012-11-05',
             region: sqsOptions.region || 'us-east-1',
             endpoint: sqsOptions.endpoint ?? undefined,
