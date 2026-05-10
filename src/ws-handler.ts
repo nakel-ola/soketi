@@ -11,7 +11,8 @@ import { PublicChannelManager } from './channels';
 import { PusherMessage, uWebSocketMessage } from './message';
 import { Server } from './server';
 import { Utils } from './utils';
-import { WebSocket } from 'uWebSockets.js';
+import { WebSocket as UWebSocket } from 'uWebSockets.js';
+type WebSocket = UWebSocket<any> & { [key: string]: any };
 
 const ab2str = require('arraybuffer-to-string');
 const Pusher = require('pusher');

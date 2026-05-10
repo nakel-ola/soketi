@@ -2,7 +2,8 @@ import { LocalAdapter } from './local-adapter';
 import { Log } from '../log';
 import { PresenceMemberInfo } from '../channels/presence-channel-manager';
 import { randomUUID } from 'crypto';
-import { WebSocket } from 'uWebSockets.js';
+import { WebSocket as UWebSocket } from 'uWebSockets.js';
+type WebSocket = UWebSocket<any> & { [key: string]: any };
 
 /**
  *                                          |-----> NODE1 ----> SEEKS DATA (ONREQUEST) ----> SEND TO THE NODE0 ---> NODE0 (ONRESPONSE) APPENDS DATA TO REQUEST OBJECT

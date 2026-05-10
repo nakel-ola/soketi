@@ -182,11 +182,125 @@ Soketi ships a PM2-aware binary that spreads across CPU cores and shares state c
 soketi-pm2 start
 ```
 
-### Hosted deployment templates
+### Deploy to Railway
 
-- [Deploy with Railway](https://github.com/soketi/soketi-railway-deploy-example)
+Railway runs long-lived containers, so it's a good fit for soketi. There's a one-click template:
+
+1. **Use the template:** open [soketi/soketi-railway-deploy-example](https://github.com/soketi/soketi-railway-deploy-example) and click **Deploy on Railway**.
+
+2. **Or deploy from this repo manually:**
+   - In the Railway dashboard: **New Project → Deploy from GitHub repo → select your fork**.
+   - Railway auto-detects the `Dockerfile` and builds it.
+   - Under **Settings → Networking**, click **Generate Domain** to get a public hostname (Railway terminates TLS automatically).
+
+3. **Set environment variables** under **Variables**:
+   ```
+   SOKETI_DEFAULT_APP_ID=your-app-id
+   SOKETI_DEFAULT_APP_KEY=your-app-key
+   SOKETI_DEFAULT_APP_SECRET=your-app-secret
+   SOKETI_PORT=${{PORT}}
+   SOKETI_METRICS_ENABLED=true
+   SOKETI_METRICS_SERVER_PORT=9601
+   ```
+   `${{PORT}}` is the variable Railway injects with the port the platform expects you to listen on.
+
+4. **Add Redis for horizontal scaling** (optional): **New → Database → Redis**, then add:
+   ```
+   SOKETI_ADAPTER_DRIVER=redis
+   SOKETI_QUEUE_DRIVER=redis
+   SOKETI_DB_REDIS_HOST=${{Redis.RAILWAY_PRIVATE_DOMAIN}}
+   SOKETI_DB_REDIS_PORT=${{Redis.RAILWAY_TCP_PROXY_PORT}}
+   SOKETI_DB_REDIS_PASSWORD=${{Redis.REDIS_PASSWORD}}
+   ```
+
+5. **Connect from your client:**
+   ```js
+   new Pusher('your-app-key', {
+       wsHost: 'your-app.up.railway.app',
+       wssPort: 443,
+       forceTLS: true,
+       enabledTransports: ['ws', 'wss'],
+       cluster: 'mt1',
+   });
+   ```
+
+### Deploy to Render
+
+Render's **Web Service** type supports persistent WebSocket connections natively.
+
+1. In the Render dashboard: **New → Web Service → connect your GitHub repo** (your fork of soketi).
+
+2. **Build & runtime:**
+   - **Runtime:** Docker
+   - **Dockerfile path:** `./Dockerfile`
+   - **Plan:** Free works for dev/hobby use (see [free-tier notes](#free-plan-on-render) below). Starter ($7/mo) is the lowest always-on tier for production.
+
+3. **Set environment variables** under **Environment**:
+   ```
+   SOKETI_DEFAULT_APP_ID=your-app-id
+   SOKETI_DEFAULT_APP_KEY=your-app-key
+   SOKETI_DEFAULT_APP_SECRET=your-app-secret
+   SOKETI_PORT=$PORT
+   SOKETI_METRICS_ENABLED=true
+   ```
+   Render injects a `PORT` env var with the port it expects you to listen on; `SOKETI_PORT=$PORT` wires soketi to that.
+
+4. **Add Redis for horizontal scaling** (optional): **New → Redis** (Render's managed Redis, free tier available), then add:
+   ```
+   SOKETI_ADAPTER_DRIVER=redis
+   SOKETI_QUEUE_DRIVER=redis
+   SOKETI_DB_REDIS_HOST=<from Render Redis "Internal Connection">
+   SOKETI_DB_REDIS_PORT=6379
+   SOKETI_DB_REDIS_PASSWORD=<from Render Redis>
+   ```
+
+5. **Health check** (optional but recommended): set the health-check path to `/` — soketi responds with a 200 there, and Render will restart the service if it stops responding.
+
+6. **Connect from your client:**
+   ```js
+   new Pusher('your-app-key', {
+       wsHost: 'your-service.onrender.com',
+       wssPort: 443,
+       forceTLS: true,
+       enabledTransports: ['ws', 'wss'],
+       cluster: 'mt1',
+   });
+   ```
+
+#### Free plan on Render
+
+The Free plan works, with one quirk: **after 15 minutes of no HTTP traffic, Render spins the service down**, killing all open WebSocket connections. The next request triggers a cold start (~30s) before clients can reconnect.
+
+Two ways to live with this:
+
+**Option A — Accept the disconnects (good for dev/demo).** Pusher clients (`pusher-js`) auto-reconnect by default, so a sleeping-then-waking service shows up to users as a brief disconnect. Fine for a personal project, a demo, or a low-traffic prototype.
+
+**Option B — Keep the service awake with an external pinger.** Hit any HTTP endpoint on your service every ≤14 minutes so Render counts it as activity:
+
+1. Use a free uptime monitor — [UptimeRobot](https://uptimerobot.com/), [cron-job.org](https://cron-job.org/), or [BetterStack](https://betterstack.com/uptime).
+2. Set it to `GET https://your-service.onrender.com/` every **5–10 minutes**.
+3. That's it — soketi answers `/` with a 200, which counts as activity and resets the spin-down timer.
+
+Caveats even with a pinger:
+- **Deploys still restart the service.** Connections will drop on every push to the connected branch — this is true on every plan, but more visible on Free since you can't do a rolling restart with multiple instances.
+- **Free bandwidth is 100GB/month outbound.** A WebSocket server pushing many high-frequency events can chew through this; check Render's metrics tab.
+- **Free has 512MB RAM and 0.1 CPU shared.** Soketi is light, but at scale you'll see degraded performance under bursty load.
+- **No managed Redis on Free for soketi clustering** — you can attach Render's free Redis, but you don't gain horizontal scaling on a single Free web service anyway. Skip the Redis adapter on Free; revisit when you upgrade.
+
+### Other hosted templates
+
 - [Deploy with Cleavr](https://cleavr.io/cleavr-slice/how-to-install-soketi)
 - [Helm chart on Artifact Hub](https://artifacthub.io/packages/search?repo=soketi)
+
+### Where you _can't_ host soketi
+
+Soketi is a long-running TCP server holding persistent WebSocket connections. It will **not** work on:
+
+- **Vercel** / **Netlify** functions — serverless model, no port binding, no persistent processes
+- **Cloudflare Workers** — V8 isolates, no native modules (`uWebSockets.js` won't load)
+- **AWS Lambda** / **Google Cloud Functions** (1st gen) — same reasons
+
+If your app frontend is on one of these, that's fine — host soketi separately on Railway/Render/Fly.io/a VPS and point your Pusher client at its hostname. The frontend doesn't care where soketi runs.
 
 ---
 

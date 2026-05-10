@@ -6,7 +6,8 @@ import { Log } from './../log';
 import { RateLimiterAbstract } from 'rate-limiter-flexible';
 import { RedisRateLimiter } from './redis-rate-limiter';
 import { Server } from '../server';
-import { WebSocket } from 'uWebSockets.js';
+import { WebSocket as UWebSocket } from 'uWebSockets.js';
+type WebSocket = UWebSocket<any> & { [key: string]: any };
 
 export class RateLimiter implements RateLimiterInterface {
     /**

@@ -1,6 +1,7 @@
 import { App } from './../app';
 import { RateLimiterAbstract, RateLimiterRes } from 'rate-limiter-flexible';
-import { WebSocket } from 'uWebSockets.js';
+import { WebSocket as UWebSocket } from 'uWebSockets.js';
+type WebSocket = UWebSocket<any> & { [key: string]: any };
 
 export interface ConsumptionResponse {
     canContinue: boolean;

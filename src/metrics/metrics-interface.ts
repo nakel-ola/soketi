@@ -1,5 +1,6 @@
 import * as prom from 'prom-client';
-import { WebSocket } from 'uWebSockets.js';
+import { WebSocket as UWebSocket } from 'uWebSockets.js';
+type WebSocket = UWebSocket<any> & { [key: string]: any };
 
 export interface MetricsInterface {
     /**

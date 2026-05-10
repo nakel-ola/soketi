@@ -2,7 +2,8 @@ import { PresenceMember } from '../channels/presence-channel-manager';
 import { PusherMessage } from '../message';
 import { Server } from '../server';
 import { Utils } from '../utils';
-import { WebSocket } from 'uWebSockets.js';
+import { WebSocket as UWebSocket } from 'uWebSockets.js';
+type WebSocket = UWebSocket<any> & { [key: string]: any };
 
 export interface JoinResponse {
     ws: WebSocket;
